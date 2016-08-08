@@ -1,0 +1,8 @@
+New Template :
+<%= form_for @template, url: items_creator_save_template_path, html: { multipart: true } do |form| %>
+  <%= form.text_field :name %><br>
+  <%= form.text_field :rarity %><br>
+  <%= form.file_field :image %><br>
+  <%= form.text_field :description %><br>
+  <%= form.submit %>
+<% end %>
