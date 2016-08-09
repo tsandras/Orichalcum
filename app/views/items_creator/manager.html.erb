@@ -1,1 +1,6 @@
+<%= content_tag :div, class: 'components-block' do -%>
+  <%= form_tag items_creator_save_components_path, method: :post do |f| %>
+    <%= select_tag 'filter[with_category]', options_for_select(@templates.map{|t| [t.name, t.id]}) %>
+  <% end %>
+<% end -%>
 <%= render 'template_form' %>

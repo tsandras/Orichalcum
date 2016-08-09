@@ -2,10 +2,15 @@ class ItemsCreatorController < ActionController::Base
 
   def manager
     @template = Template.new
+    @templates = Template.all
   end
 
   def save_template
     @template = Template.create(template_params)
+  end
+
+  def save_components
+    
   end
 
   def templates
