@@ -1,6 +1,5 @@
 source 'https://rubygems.org'
 
-
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
 gem 'rails', '~> 5.0.0'
 # Use postgresql as the database for Active Record
@@ -30,11 +29,17 @@ gem 'jbuilder', '~> 2.5'
 # Use Capistrano for deployment
 # gem 'capistrano-rails', group: :development
 
+# Manage file attachment of class
 gem 'paperclip', '~> 5.0.0'
 
+# Create erd representation of db
 gem 'rails-erd'
 
+# Annotate ActiveRecord class with table schema
 gem 'annotate'
+
+# Code linter
+gem 'rubocop', require: false
 
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
@@ -42,10 +47,12 @@ group :development, :test do
 end
 
 group :development do
-  # Access an IRB console on exception pages or by using <%= console %> anywhere in the code.
+  # Access an IRB console on exception pages or
+  # by using <%= console %> anywhere in the code.
   gem 'web-console'
   gem 'listen', '~> 3.0.5'
-  # Spring speeds up development by keeping your application running in the background. Read more: https://github.com/rails/spring
+  # Spring speeds up development by keeping your application running in the background.
+  # Read more: https://github.com/rails/spring
   gem 'spring'
   gem 'spring-watcher-listen', '~> 2.0.0'
 end
