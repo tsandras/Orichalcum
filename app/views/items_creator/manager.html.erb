@@ -5,11 +5,7 @@
 <% end -%>
 <%= render 'template_form' %>
 
-<canvas id="canvas5" width="400" height="300">
-  This text is displayed if your browser does not support HTML5 Canvas.
-</canvas>
-
-<canvas id="canvas1" width="400" height="300">
+<canvas id="canvas5" width="800" height="800">
   This text is displayed if your browser does not support HTML5 Canvas.
 </canvas>
 
@@ -90,7 +86,9 @@
     this.y = y;
     this.ctx = context;
     this.id = templateData.id;
-    this.components = templateData.components;
+    this.data = templateData;
+    this.image = new Image();
+    this.image.src = templateData.image_thumb_url
     this.getCenter = function() {
       return {x: this.x + 25, y: this.y + 25};
     };
@@ -98,45 +96,69 @@
       ctx.beginPath();
       ctx.rect(this.x,this.y,50,50);
       ctx.stroke();
+      // this.image.onload = function(){
+      // this.image.onload = function() {
+      this.ctx.drawImage(this.image, this.x, this.y);
+      // }
+      // }
     }
   }
 
-  function TemplatesTree(context, templateData) {
-    console.log('COUCOU');
-    console.log(templateData.id);
-    this.template = templateData;
+  function TemplatesTree(context, tree, xroot, yroot) {
     this.ctx = context;
-    this.connectTwoTemplates = function(t1, t2) {
+    this.xroot = xroot;
+    this.yroot = yroot;
+    var getPositionOfFirst = function(nbsComponents, x) {
+      var half = Math.round(nbsComponents / 2);
+      return x - (half + 1) * 100;
+    }
+    var constructTree = function(tree, x, y) {
+      var noeud = { 
+        template: new Template(this.ctx, tree.template, x, y),
+        components: [] 
+      }
+      var nbsComponents = tree.components.length
+      var xtemp = getPositionOfFirst(nbsComponents, x)
+      var i = 1;
+      tree.components.forEach(function(component) {
+        if (nbsComponents % 2 == 0 && i == 2) {
+          xtemp = xtemp + 200;
+        } else {
+          xtemp = xtemp + 100;
+        }
+        i++;
+        noeud.components.push(constructTree(component, xtemp, y + 100))
+      });
+      return noeud;
+    }
+    this.tree = constructTree(tree, this.xroot, this.yroot);
+    var connectTwoTemplates = function(t1, t2) {
       ctx.beginPath();
       ctx.moveTo(t1.getCenter().x,t1.getCenter().y);
       ctx.lineTo(t2.getCenter().x,t2.getCenter().y);
       ctx.stroke(); 
     }
-    this.draw = function rec(template, x, y) {
-      var t = new Template(this.ctx, template, x, y);
-      t.draw();
-      if (template.components && template.components.length > 0) {
-        template.components.forEach(function(component) {
-          rec(component, x + 50, y + 50);
-          // var tp = new Template(this.ctx, component, 200, 200);
-          // tp.draw();
-        });
-      }
+    this.draw = function draw(tree) {
+      tree.template.draw();
+      tree.components.forEach(function(component) {
+        draw(component);
+        connectTwoTemplates(tree.template, component.template)
+      });
     }
   }
 
   $('#template_id').change(function() {
-    console.log($("option:selected", this));
     var template = $("#template_id option:selected");
     $.ajax({
       type: 'POST',
       url: '/items_creator/templates_tree',
       data: {id: template.val()},
       success: function(response, textStatus) {
-        console.log(response);
-        // TODO create canvas
-        var tt = new TemplatesTree(ctx, response);
-        tt.draw(tt.template, 50, 50);
+        console.log(response)
+        ctx.clearRect(0, 0, canvas5.width, canvas5.height);
+        var tt = new TemplatesTree(ctx, response, 250, 50);
+        console.log(tt.tree);
+        tt.draw(tt.tree);
       }
     });
   });

@@ -18,7 +18,7 @@ class ItemsCreatorController < ApplicationController
 
   def templates_tree
     template = Template.find_by_id params[:id]
-    render json: template.to_json(methods: :components)
+    render json: Template.tree(template)
   end
 
   private

@@ -16,6 +16,8 @@
 
 # app/models/template.rb
 class Template < ApplicationRecord
+  attr_accessor :image_url, :image_thumb_url
+
   has_many :component_joins, class_name: 'Component', foreign_key: 'template_id'
   has_many :components,
            through: :component_joins,
@@ -35,8 +37,28 @@ class Template < ApplicationRecord
 
   validates_attachment_content_type :image, content_type: %r{\Aimage/.*\Z}
 
+  def image_url
+    @image_url = image.url
+  end
+
+  def image_url=(val)
+    @image_url = val
+  end
+
+  def image_thumb_url
+    @image_thumb_url = image.url(:thumb)
+  end
+
+  def image_thumb_url=(val)
+    @image_thumb_url = val
+  end
+
+  def attributes
+    super.merge( {image_url: image_url, image_thumb_url: image_thumb_url} )
+  end
+
   def self.tree(template, deep = 2)
-    noeud = { template: template.name, components: [] }
+    noeud = { template: template, components: [] }
     return noeud if deep <= 0
     template.components.each do |component|
       noeud[:components].push(tree(component, deep - 1))
