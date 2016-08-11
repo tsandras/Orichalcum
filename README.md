@@ -23,6 +23,12 @@ rake db:create:all
 rails server
 ```
 
+### TODO
+```sh
+annotate
+rubocop
+```
+
 ### Domain Model
 Run `rake generate_erd` to regenerate (must have graphvis).
 ![](/public/erd.png)

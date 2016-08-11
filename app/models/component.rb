@@ -10,7 +10,8 @@
 #  updated_at   :datetime         not null
 #
 
+# app/models/component.rb
 class Component < ApplicationRecord
   belongs_to :template
-  belongs_to :this, class_name: 'Template', foreign_key: 'component_id'
+  belongs_to :component, class_name: 'Template', foreign_key: 'component_id'
 end

@@ -14,15 +14,33 @@
 #  updated_at         :datetime         not null
 #
 
+# app/models/template.rb
 class Template < ApplicationRecord
-  has_many :components
-  has_many :templates, class_name: 'Component', foreign_key: 'component_id'
+  has_many :component_joins, class_name: 'Component', foreign_key: 'template_id'
+  has_many :components,
+           through: :component_joins,
+           foreign_key: 'component_id',
+           source: 'component'
+  has_many :template_joins, class_name: 'Component', foreign_key: 'component_id'
+  has_many :templates,
+           through: :template_joins,
+           foreign_key: 'template_id',
+           source: 'template'
 
-  has_attached_file :image, 
-    styles: { medium: "300x300>", thumb: "100x100>" },
-    url: "/templates/:style/:basename.:extension",
-    path: ":rails_root/public/templates/:style/:basename.:extension",
-    default_url: "/templates/:style/missing.png"
+  has_attached_file :image,
+                    styles: { medium: '300x300>', thumb: '50x50>' },
+                    url: '/templates/:style/:basename.:extension',
+                    path: ':rails_root/public/templates/:style/:basename.:extension',
+                    default_url: '/templates/:style/missing.png'
 
-  validates_attachment_content_type :image, content_type: /\Aimage\/.*\Z/
+  validates_attachment_content_type :image, content_type: %r{\Aimage/.*\Z}
+
+  def self.tree(template, deep = 2)
+    noeud = { template: template.name, components: [] }
+    return noeud if deep <= 0
+    template.components.each do |component|
+      noeud[:components].push(tree(component, deep - 1))
+    end
+    noeud
+  end
 end

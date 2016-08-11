@@ -1,6 +1,159 @@
 <%= content_tag :div, class: 'components-block' do -%>
   <%= form_tag items_creator_save_components_path, method: :post do |f| %>
-    <%= select_tag 'filter[with_category]', options_for_select(@templates.map{|t| [t.name, t.id]}) %>
+    <%= select_tag 'template[id]', options_for_select(@templates.map{|t| [t.name, t.id]}) %>
   <% end %>
 <% end -%>
 <%= render 'template_form' %>
+
+<canvas id="canvas5" width="400" height="300">
+  This text is displayed if your browser does not support HTML5 Canvas.
+</canvas>
+
+<canvas id="canvas1" width="400" height="300">
+  This text is displayed if your browser does not support HTML5 Canvas.
+</canvas>
+
+<script type="text/javascript">
+  var canvas5;
+  var ctx1;
+  var ctx5;
+  var x5 = 75;
+  var y5 = 50;
+  var dx5 = 5;
+  var dy5 = 3;
+  var WIDTH5 = 400;
+  var HEIGHT5 = 400; 
+  var dragok = false;
+
+  function rect(x,y,w,h) {
+    ctx5.beginPath();
+    ctx5.rect(x,y,w,h);
+    ctx5.closePath();
+    ctx5.fill();
+  } 
+   
+  function clear() {
+    ctx5.clearRect(0, 0, WIDTH5, HEIGHT5);
+  }
+
+  function init() {
+    canvas5 = document.getElementById("canvas5");
+    ctx5 = canvas5.getContext("2d");
+    draw5();
+    return setInterval(draw5, 10);
+  }   
+
+  function draw5() {
+    clear();
+    ctx5.fillStyle = "#FAF7F8";
+    rect(0,0,WIDTH5,HEIGHT5);
+    ctx5.fillStyle = "#444444";
+    drawLine();
+    rect(x5 - 15, y5 - 15, 30, 30);
+  }
+
+  function drawLine() {
+    ctx5.beginPath();
+    ctx5.moveTo(0,0);
+    ctx5.lineTo(200,10);
+    ctx5.stroke(); 
+  }
+
+  function myMove(e){
+   if (dragok){
+    x5 = e.pageX - canvas5.offsetLeft;
+    y5 = e.pageY - canvas5.offsetTop;
+   }
+  }
+
+  function myDown(e){
+   if (e.pageX < x5 + 15 + canvas5.offsetLeft)
+    if (e.pageX > x5 - 15 + canvas5.offsetLeft)
+      if (e.pageY < y5 + 15 + canvas5.offsetTop)
+        if (e.pageY > y5 -15 + canvas5.offsetTop){
+          $('#canvas5').css('cursor','pointer')
+          x5 = e.pageX - canvas5.offsetLeft;
+          y5 = e.pageY - canvas5.offsetTop;
+          dragok = true;
+          canvas5.onmousemove = myMove;
+   }
+  }
+
+  function myUp(){
+    $('#canvas5').css('cursor','auto')
+    dragok = false;
+    canvas5.onmousemove = null;
+  }
+
+  function Template(context, templateData, x, y) {
+    this.x = x;
+    this.y = y;
+    this.ctx = context;
+    this.id = templateData.id;
+    this.components = templateData.components;
+    this.getCenter = function() {
+      return {x: this.x + 25, y: this.y + 25};
+    };
+    this.draw = function() {
+      ctx.beginPath();
+      ctx.rect(this.x,this.y,50,50);
+      ctx.stroke();
+    }
+  }
+
+  function TemplatesTree(context, templateData) {
+    console.log('COUCOU');
+    console.log(templateData.id);
+    this.template = templateData;
+    this.ctx = context;
+    this.connectTwoTemplates = function(t1, t2) {
+      ctx.beginPath();
+      ctx.moveTo(t1.getCenter().x,t1.getCenter().y);
+      ctx.lineTo(t2.getCenter().x,t2.getCenter().y);
+      ctx.stroke(); 
+    }
+    this.draw = function rec(template, x, y) {
+      var t = new Template(this.ctx, template, x, y);
+      t.draw();
+      if (template.components && template.components.length > 0) {
+        template.components.forEach(function(component) {
+          rec(component, x + 50, y + 50);
+          // var tp = new Template(this.ctx, component, 200, 200);
+          // tp.draw();
+        });
+      }
+    }
+  }
+
+  $('#template_id').change(function() {
+    console.log($("option:selected", this));
+    var template = $("#template_id option:selected");
+    $.ajax({
+      type: 'POST',
+      url: '/items_creator/templates_tree',
+      data: {id: template.val()},
+      success: function(response, textStatus) {
+        console.log(response);
+        // TODO create canvas
+        var tt = new TemplatesTree(ctx, response);
+        tt.draw(tt.template, 50, 50);
+      }
+    });
+  });
+
+  // init();
+  canvas5 = document.getElementById("canvas5");
+  ctx = canvas5.getContext("2d");
+  // var t1 = new Template(ctx, 0, 0);
+  // var t2 = new Template(ctx, 100, 200);
+  // var t3 = new Template(ctx, 200, 200);
+  // var ts = [t1, t2, t3]
+  // var tt = new TemplatesTree(ctx, ts);
+  // tt.draws();
+  // tt.connectTwoTemplates(t1, t2);
+  // tt.connectTwoTemplates(t1, t3);
+  // console.log(t1.getCenter());
+
+  // canvas5.onmousedown = myDown;
+  // canvas5.onmouseup = myUp;
+</script>
