@@ -1,5 +1,5 @@
-class ItemsCreatorController < ActionController::Base
-
+# app/controllers/items_creator_controller.rb
+class ItemsCreatorController < ApplicationController
   def manager
     @template = Template.new
     @templates = Template.all
@@ -10,11 +10,15 @@ class ItemsCreatorController < ActionController::Base
   end
 
   def save_components
-    
   end
 
   def templates
     @template = Template.find_by_id params[:id]
+  end
+
+  def templates_tree
+    template = Template.find_by_id params[:id]
+    render json: template.to_json(methods: :components)
   end
 
   private
