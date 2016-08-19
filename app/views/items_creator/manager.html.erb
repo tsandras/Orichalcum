@@ -1,13 +1,17 @@
-<%= content_tag :div, class: 'components-block' do -%>
-  <%= form_tag items_creator_save_components_path, method: :post do |f| %>
-    <%= select_tag 'template[id]', options_for_select(@templates.map{|t| [t.name, t.id]}) %>
-  <% end %>
-<% end -%>
-<%= render 'template_form' %>
-
-<div id="phaser-example">
+<div class="row">
+  <div class="col-md-8">
+    <%= content_tag :div, class: 'components-block' do -%>
+      <%= form_tag items_creator_save_components_path, method: :post do |f| %>
+        <%= select_tag 'template[id]', options_for_select(@templates.map{|t| [t.name, t.id]}) %>
+      <% end %>
+    <% end -%>
+    <div id="phaser-example">
+    </div>
+  </div>
+  <div class="col-md-4">
+    <%= render 'template_form' %>
+  </div>
 </div>
-
 <script type="text/javascript">
   function Template(game, templateData, x, y) {
     this.x = x;
