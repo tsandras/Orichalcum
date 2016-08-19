@@ -9,28 +9,26 @@
 </div>
 
 <script type="text/javascript">
-
   function Template(game, templateData, x, y) {
     this.x = x;
     this.y = y;
     this.game = game;
-    this.id = templateData.id;
-    this.name = templateData.name;
-    this.data = templateData;
-    this.text = game.add.text(
-      this.x + 55, this.y + 10, '', { font: '12px', fill: '#000',
-      align: 'left', boundsAlignH: 'left', boundsAlignV: 'top',
-      wordWrap: true, wordWrapWidth: 300 }
-    );
-    this.text.setTextBounds(0, 0, 80, 30);
-    this.text.visible = false;
-    this.text.text = this.name +": " + templateData.description
+    if (templateData) {
+      this.id = templateData.id;
+      this.name = templateData.name;
+      this.data = templateData;
+      this.text = game.add.text(
+        this.x + 55, this.y + 10, '', { font: '12px', fill: '#000',
+        align: 'left', boundsAlignH: 'left', boundsAlignV: 'top',
+        wordWrap: true, wordWrapWidth: 300 }
+      );
+      this.text.setTextBounds(0, 0, 80, 30);
+      this.text.visible = false;
+      this.text.text = this.name +": " + templateData.description
+    }
     this.getCenter = function() {
       return {x: this.x + 25, y: this.y + 25};
     };
-    this.draw = function() {
-      game.add.sprite(this.x, this.y, this.name);
-    }
     this.load = function() {
       this.game.load.image(this.name, this.data.image_thumb_url);
     }
@@ -43,6 +41,7 @@
     self.yroot = yroot;
     self.allSprites = {};
     self.allGraphics = [];
+    self.disconnected = {};
     var getPositionOfFirst = function(nbsComponents, x) {
       var half = Math.round(nbsComponents / 2);
       return x - (half + 1) * 100;
@@ -98,7 +97,7 @@
     var connectTwoTemplates = function(t1, t2) {
       var graphics = self.game.add.graphics(0, 0);
       graphics.beginFill(0xFF3300);
-      graphics.lineStyle(3, 0xffd900, 1);
+      graphics.lineStyle(3, 0xA9A9A9, 1);
       graphics.moveTo(t1.getCenter().x, t1.getCenter().y);
       graphics.lineTo(t2.getCenter().x, t2.getCenter().y);
       graphics.endFill();
@@ -137,6 +136,59 @@
     self.load = function load() {
       subLoad(self.tree);
     }
+    self.removeNode = function(node, x, y) {
+      subRemoveNode(this.tree, node, x, y);
+    }
+    var subRemoveNode = function subRemoveNode(tree, node, x, y) {
+      if (tree.template == node) {
+        tree.template = new Template(self.game, null, node.x, node.y);
+        tree.template.name = node.x + ";" + node.y;
+        var defaultt = game.add.sprite(node.x, node.y, 'default');
+        self.allSprites[node.x + ";" + node.y] = defaultt;
+        node.text.x = x + 55;
+        node.text.y = y + 10;
+        self.disconnected[node.name] = node;
+      }
+      tree.components.forEach(function(component) {
+        subRemoveNode(component, node, x, y);
+      });
+    }
+    self.changeNode = function(node, x, y) {
+      subChangeNode(this.tree, node, x, y);
+    }
+    var subChangeNode = function subChangeNode(tree, node, x, y) {
+      if (x < tree.template.x + 50 && x > tree.template.x - 50 &&
+      y < tree.template.y + 50 && y > tree.template.y - 50 && 
+      node.name != tree.template.name) {
+        self.disconnected[tree.template.name] = tree.template;
+        self.allSprites[tree.template.name].kill();
+        var tmpX = tree.template.x;
+        var tmpY = tree.template.y;
+        tree.template = node;
+        tree.template.x = tmpX;
+        tree.template.y = tmpY;
+        tree.template.text.x = tmpX + 55;
+        tree.template.text.y = tmpY + 10;
+      }
+      tree.components.forEach(function(component) {
+        subChangeNode(component, node, x, y);
+      });
+    }
+    self.isNearTo = function(x, y) {
+      out = false;
+      subIsNearTo(this.tree, x, y);
+      return out;
+    }
+    var subIsNearTo = function subIsNearTo(tree, x, y) {
+      if (x < tree.template.x + 50 && x > tree.template.x - 50 &&
+      y < tree.template.y + 50 && y > tree.template.y - 50) {
+        out = true;
+        return;
+      }
+      tree.components.forEach(function(component) {
+        subIsNearTo(component, x, y);
+      });
+    }
   }
 
   $('#template_id').change(function() {
@@ -149,8 +201,8 @@
         templatesTree.removeTree();
         templatesTree.setTree(response);
         templatesTree.load();
-        game.load.start();
         templatesTree.drawConnection();
+        game.load.start();
       }
     });
   });
@@ -163,12 +215,11 @@
   var counter = 0;
 
   function preload() {
-
+    game.load.image('default', '/templates/empty_location.png');
   }
 
   function create() {
     game.stage.backgroundColor = "#FFFFFF";
-
     game.load.onFileComplete.add(fileComplete, this);
   }
 
@@ -176,30 +227,39 @@
     text.setText("Loading ...");
   }
 
-  //  This callback is sent the following parameters:
   function fileComplete(progress, cacheKey, success, totalLoaded, totalFiles) {
-    // text.setText("File Complete: " + progress + "% - " + totalLoaded + " out of " + totalFiles);
     var template = templatesTree.getTemplate(cacheKey);
     var newSprite = game.add.sprite(template.x, template.y, cacheKey);
-    newSprite.events.onInputDown.add(function() {
-      if (template.text.visible) {
-        template.text.visible = false;
-      } else {
-        template.text.visible = true;
-      }
-    }, this);
     newSprite.inputEnabled = true;
-    // text = game.add.text(250, 12, '', { fill: '#000' });
+    newSprite.input.enableDrag();
+    newSprite.events.onInputOver.add(over, {template: template}, this);
+    newSprite.events.onInputOut.add(listener, {template: template}, this);
+    newSprite.events.onDragStop.add(onDragStop, {template: template}, this);
     templatesTree.allSprites[cacheKey] = newSprite;
-    // newImage.scale.set(0.3);
+  }
+
+  function over(item) {
+    item.input.useHandCursor = true;
+    this.template.text.visible = true;
+  }
+
+  function listener(item) {
+    this.template.text.visible = false;
+  }
+
+  function onDragStop(sprite, pointer) {
+    var t = templatesTree.getTemplate(sprite.key);
+    if (!t) {
+      t = templatesTree.disconnected[sprite.key];
+    }
+    if (templatesTree.isNearTo(pointer.x, pointer.y)) {
+      templatesTree.changeNode(t, pointer.x, pointer.y);
+    } else {
+      templatesTree.removeNode(t, pointer.x, pointer.y);
+    }
   }
 
   function loadComplete() {
     text.setText("Load Complete");
   }
-
-  // function listener () {
-  //   console.log('toto');
-  //   template.text.visible = true;
-  // }
 </script>
