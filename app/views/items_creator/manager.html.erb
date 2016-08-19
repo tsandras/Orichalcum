@@ -5,116 +5,75 @@
 <% end -%>
 <%= render 'template_form' %>
 
-<canvas id="canvas5" width="800" height="800">
-  This text is displayed if your browser does not support HTML5 Canvas.
-</canvas>
+<div id="phaser-example">
+</div>
 
 <script type="text/javascript">
-  var canvas5;
-  var ctx1;
-  var ctx5;
-  var x5 = 75;
-  var y5 = 50;
-  var dx5 = 5;
-  var dy5 = 3;
-  var WIDTH5 = 400;
-  var HEIGHT5 = 400; 
-  var dragok = false;
 
-  function rect(x,y,w,h) {
-    ctx5.beginPath();
-    ctx5.rect(x,y,w,h);
-    ctx5.closePath();
-    ctx5.fill();
-  } 
-   
-  function clear() {
-    ctx5.clearRect(0, 0, WIDTH5, HEIGHT5);
-  }
-
-  function init() {
-    canvas5 = document.getElementById("canvas5");
-    ctx5 = canvas5.getContext("2d");
-    draw5();
-    return setInterval(draw5, 10);
-  }   
-
-  function draw5() {
-    clear();
-    ctx5.fillStyle = "#FAF7F8";
-    rect(0,0,WIDTH5,HEIGHT5);
-    ctx5.fillStyle = "#444444";
-    drawLine();
-    rect(x5 - 15, y5 - 15, 30, 30);
-  }
-
-  function drawLine() {
-    ctx5.beginPath();
-    ctx5.moveTo(0,0);
-    ctx5.lineTo(200,10);
-    ctx5.stroke(); 
-  }
-
-  function myMove(e){
-   if (dragok){
-    x5 = e.pageX - canvas5.offsetLeft;
-    y5 = e.pageY - canvas5.offsetTop;
-   }
-  }
-
-  function myDown(e){
-   if (e.pageX < x5 + 15 + canvas5.offsetLeft)
-    if (e.pageX > x5 - 15 + canvas5.offsetLeft)
-      if (e.pageY < y5 + 15 + canvas5.offsetTop)
-        if (e.pageY > y5 -15 + canvas5.offsetTop){
-          $('#canvas5').css('cursor','pointer')
-          x5 = e.pageX - canvas5.offsetLeft;
-          y5 = e.pageY - canvas5.offsetTop;
-          dragok = true;
-          canvas5.onmousemove = myMove;
-   }
-  }
-
-  function myUp(){
-    $('#canvas5').css('cursor','auto')
-    dragok = false;
-    canvas5.onmousemove = null;
-  }
-
-  function Template(context, templateData, x, y) {
+  function Template(game, templateData, x, y) {
     this.x = x;
     this.y = y;
-    this.ctx = context;
+    this.game = game;
     this.id = templateData.id;
+    this.name = templateData.name;
     this.data = templateData;
-    this.image = new Image();
-    this.image.src = templateData.image_thumb_url
+    this.text = game.add.text(
+      this.x + 55, this.y + 10, '', { font: '12px', fill: '#000',
+      align: 'left', boundsAlignH: 'left', boundsAlignV: 'top',
+      wordWrap: true, wordWrapWidth: 300 }
+    );
+    this.text.setTextBounds(0, 0, 80, 30);
+    this.text.visible = false;
+    this.text.text = this.name +": " + templateData.description
     this.getCenter = function() {
       return {x: this.x + 25, y: this.y + 25};
     };
     this.draw = function() {
-      ctx.beginPath();
-      ctx.rect(this.x,this.y,50,50);
-      ctx.stroke();
-      // this.image.onload = function(){
-      // this.image.onload = function() {
-      this.ctx.drawImage(this.image, this.x, this.y);
-      // }
-      // }
+      game.add.sprite(this.x, this.y, this.name);
+    }
+    this.load = function() {
+      this.game.load.image(this.name, this.data.image_thumb_url);
     }
   }
 
-  function TemplatesTree(context, tree, xroot, yroot) {
-    this.ctx = context;
-    this.xroot = xroot;
-    this.yroot = yroot;
+  function TemplatesTree(game, tree, xroot, yroot) {
+    var self = this;
+    self.game = game;
+    self.xroot = xroot;
+    self.yroot = yroot;
+    self.allSprites = {};
+    self.allGraphics = [];
     var getPositionOfFirst = function(nbsComponents, x) {
       var half = Math.round(nbsComponents / 2);
       return x - (half + 1) * 100;
     }
+    self.setTree = function(tree) {
+      self.tree = constructTree(tree, self.xroot, self.yroot);
+    }
+    self.removeTree = function() {
+      if (self.tree) {
+        self.allGraphics.forEach(function(graphic) {
+          graphic.clear();
+        });
+        self.allGraphics = [];
+        subRemoveTree(self.tree);
+        self.tree = null;
+      }
+    }
+    var subRemoveTree = function subRemoveTree(tree) {
+      if (self.allSprites[tree.template.name]) {
+        var sprite = self.allSprites[tree.template.name];
+        sprite.kill();
+        self.allSprites[tree.template.name] = null;
+      }
+      tree.template.text.destroy();
+      tree.components.forEach(function(component) {
+        subRemoveTree(component, name);
+      });
+    }
     var constructTree = function(tree, x, y) {
       var noeud = { 
-        template: new Template(this.ctx, tree.template, x, y),
+        template: new Template(self.game, tree.template, x, y),
         components: [] 
       }
       var nbsComponents = tree.components.length
@@ -131,19 +90,52 @@
       });
       return noeud;
     }
-    this.tree = constructTree(tree, this.xroot, this.yroot);
-    var connectTwoTemplates = function(t1, t2) {
-      ctx.beginPath();
-      ctx.moveTo(t1.getCenter().x,t1.getCenter().y);
-      ctx.lineTo(t2.getCenter().x,t2.getCenter().y);
-      ctx.stroke(); 
+    if (tree) {
+      self.tree = constructTree(tree, self.xroot, self.yroot);
+    } else {
+      self.tree = null;
     }
-    this.draw = function draw(tree) {
-      tree.template.draw();
+    var connectTwoTemplates = function(t1, t2) {
+      var graphics = self.game.add.graphics(0, 0);
+      graphics.beginFill(0xFF3300);
+      graphics.lineStyle(3, 0xffd900, 1);
+      graphics.moveTo(t1.getCenter().x, t1.getCenter().y);
+      graphics.lineTo(t2.getCenter().x, t2.getCenter().y);
+      graphics.endFill();
+      self.allGraphics.push(graphics);
+    }
+    var subDrawConnection = function subDrawConnection(tree) {
       tree.components.forEach(function(component) {
-        draw(component);
+        subDrawConnection(component);
         connectTwoTemplates(tree.template, component.template)
       });
+    }
+    self.drawConnection = function() {
+      subDrawConnection(self.tree);
+    }
+    var subGetTemplate = function subGetTemplate(tree, name) {
+      if (tree.template.name == name) {
+        out = tree.template;
+        return;
+      }
+      tree.components.forEach(function(component) {
+        subGetTemplate(component, name);
+      });
+    }
+    self.getTemplate = function(name) {
+      // TODO improve getTemplate...
+      out = null;
+      subGetTemplate(self.tree, name);
+      return out;
+    }
+    var subLoad = function subLoad(tree) {
+      tree.template.load();
+      tree.components.forEach(function(component) {
+        subLoad(component);
+      });
+    }
+    self.load = function load() {
+      subLoad(self.tree);
     }
   }
 
@@ -154,28 +146,60 @@
       url: '/items_creator/templates_tree',
       data: {id: template.val()},
       success: function(response, textStatus) {
-        console.log(response)
-        ctx.clearRect(0, 0, canvas5.width, canvas5.height);
-        var tt = new TemplatesTree(ctx, response, 250, 50);
-        console.log(tt.tree);
-        tt.draw(tt.tree);
+        templatesTree.removeTree();
+        templatesTree.setTree(response);
+        templatesTree.load();
+        game.load.start();
+        templatesTree.drawConnection();
       }
     });
   });
 
-  // init();
-  canvas5 = document.getElementById("canvas5");
-  ctx = canvas5.getContext("2d");
-  // var t1 = new Template(ctx, 0, 0);
-  // var t2 = new Template(ctx, 100, 200);
-  // var t3 = new Template(ctx, 200, 200);
-  // var ts = [t1, t2, t3]
-  // var tt = new TemplatesTree(ctx, ts);
-  // tt.draws();
-  // tt.connectTwoTemplates(t1, t2);
-  // tt.connectTwoTemplates(t1, t3);
-  // console.log(t1.getCenter());
 
-  // canvas5.onmousedown = myDown;
-  // canvas5.onmouseup = myUp;
+  var game = new Phaser.Game(800, 600, Phaser.AUTO, 'phaser-example', { preload: preload, create: create });
+  var templatesTree = new TemplatesTree(game, null, 250, 50);
+
+  var text;
+  var counter = 0;
+
+  function preload() {
+
+  }
+
+  function create() {
+    game.stage.backgroundColor = "#FFFFFF";
+
+    game.load.onFileComplete.add(fileComplete, this);
+  }
+
+  function loadStart() {
+    text.setText("Loading ...");
+  }
+
+  //  This callback is sent the following parameters:
+  function fileComplete(progress, cacheKey, success, totalLoaded, totalFiles) {
+    // text.setText("File Complete: " + progress + "% - " + totalLoaded + " out of " + totalFiles);
+    var template = templatesTree.getTemplate(cacheKey);
+    var newSprite = game.add.sprite(template.x, template.y, cacheKey);
+    newSprite.events.onInputDown.add(function() {
+      if (template.text.visible) {
+        template.text.visible = false;
+      } else {
+        template.text.visible = true;
+      }
+    }, this);
+    newSprite.inputEnabled = true;
+    // text = game.add.text(250, 12, '', { fill: '#000' });
+    templatesTree.allSprites[cacheKey] = newSprite;
+    // newImage.scale.set(0.3);
+  }
+
+  function loadComplete() {
+    text.setText("Load Complete");
+  }
+
+  // function listener () {
+  //   console.log('toto');
+  //   template.text.visible = true;
+  // }
 </script>

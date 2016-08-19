@@ -41,9 +41,13 @@ gem 'annotate'
 # Code linter
 gem 'rubocop', require: false
 
+# html5 canvas library
+gem 'phaser-rails'
+
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
   gem 'byebug', platform: :mri
+  gem 'rails-rename', '~> 1.0.0'
 end
 
 group :development do
