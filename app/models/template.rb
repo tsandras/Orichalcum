@@ -16,7 +16,7 @@
 
 # app/models/template.rb
 class Template < ApplicationRecord
-  attr_accessor :image_url, :image_thumb_url
+  attr_accessor :image_url, :image_thumb_url, :image_data
 
   has_many :component_joins, class_name: 'Component', foreign_key: 'template_id'
   has_many :components,
@@ -37,24 +37,18 @@ class Template < ApplicationRecord
 
   validates_attachment_content_type :image, content_type: %r{\Aimage/.*\Z}
 
+  before_save :decode_base64_image
+
   def image_url
     @image_url = image.url
-  end
-
-  def image_url=(val)
-    @image_url = val
   end
 
   def image_thumb_url
     @image_thumb_url = image.url(:thumb)
   end
 
-  def image_thumb_url=(val)
-    @image_thumb_url = val
-  end
-
   def attributes
-    super.merge( {image_url: image_url, image_thumb_url: image_thumb_url} )
+    super.merge(image_url: image_url, image_thumb_url: image_thumb_url)
   end
 
   def self.tree(template, deep = 2)
@@ -64,5 +58,19 @@ class Template < ApplicationRecord
       noeud[:components].push(tree(component, deep - 1))
     end
     noeud
+  end
+
+  protected
+
+  def decode_base64_image
+    if image_data.present?
+      blob = image_data.split(',')[1]
+      data = StringIO.new(Base64.decode64(blob))
+      data.class_eval do
+        attr_accessor :content_type, :original_filename
+      end
+      data.original_filename = image_file_name
+      self.image = data
+    end
   end
 end

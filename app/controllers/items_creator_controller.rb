@@ -7,6 +7,7 @@ class ItemsCreatorController < ApplicationController
 
   def save_template
     @template = Template.create(template_params)
+    render json: { template: @template }, statue: 200
   end
 
   def save_components
@@ -24,6 +25,13 @@ class ItemsCreatorController < ApplicationController
   private
 
   def template_params
-    params.require(:template).permit(:name, :rarity, :image, :description)
+    params.require(:template).permit(
+      :name,
+      :rarity,
+      :image,
+      :description,
+      :image_data,
+      :image_file_name
+    )
   end
 end
