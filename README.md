@@ -29,6 +29,16 @@ annotate
 rubocop
 ```
 
+### Model pattern
+1) Attributs
+2) Relations
+3) Validations
+4) Scopes
+5) Callbacks
+6) Public methods
+7) Protected methods
+8) Private methods
+
 ### Domain Model
 Run `rake generate_erd` to regenerate (must have graphvis).
 ![](/public/erd.png)
