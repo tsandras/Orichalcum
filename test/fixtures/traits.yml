@@ -1,0 +1,26 @@
+# == Schema Information
+#
+# Table name: traits
+#
+#  id          :integer          not null, primary key
+#  kind        :string           not null
+#  name        :string           not null
+#  value       :string           not null
+#  description :text
+#  created_at  :datetime         not null
+#  updated_at  :datetime         not null
+#
+
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  kind: MyString
+  name: MyString
+  value: MyString
+  description: MyText
+
+two:
+  kind: MyString
+  name: MyString
+  value: MyString
+  description: MyText

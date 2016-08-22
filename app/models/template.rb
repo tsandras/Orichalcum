@@ -3,8 +3,8 @@
 # Table name: templates
 #
 #  id                 :integer          not null, primary key
-#  rarity             :integer
-#  name               :string
+#  rarity             :integer          default(0), not null
+#  name               :string           not null
 #  description        :text
 #  image_file_name    :string
 #  image_content_type :string
@@ -16,8 +16,10 @@
 
 # app/models/template.rb
 class Template < ApplicationRecord
+  # Attributes
   attr_accessor :image_url, :image_thumb_url, :image_data
 
+  # Relations
   has_many :component_joins, class_name: 'Component', foreign_key: 'template_id'
   has_many :components,
            through: :component_joins,
@@ -28,17 +30,24 @@ class Template < ApplicationRecord
            through: :template_joins,
            foreign_key: 'template_id',
            source: 'template'
-
+  has_and_belongs_to_many :traits
   has_attached_file :image,
                     styles: { medium: '300x300>', thumb: '50x50>' },
                     url: '/templates/:style/:basename.:extension',
                     path: ':rails_root/public/templates/:style/:basename.:extension',
                     default_url: '/templates/:style/missing.png'
 
+  # Validations
   validates_attachment_content_type :image, content_type: %r{\Aimage/.*\Z}
+  validates_presence_of :name, :rarity
 
+  # Scopes
+  scope :rarities, -> (rarity) { where(rarity: rarity) }
+
+  # Callbacks
   before_save :decode_base64_image
 
+  # Public methods
   def image_url
     @image_url = image.url
   end

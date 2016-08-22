@@ -10,17 +10,17 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20160809064053) do
+ActiveRecord::Schema.define(version: 20160822074916) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
   create_table "components", force: :cascade do |t|
-    t.integer  "template_id"
-    t.integer  "component_id"
-    t.integer  "quantity"
-    t.datetime "created_at",   null: false
-    t.datetime "updated_at",   null: false
+    t.integer  "template_id",              null: false
+    t.integer  "component_id",             null: false
+    t.integer  "quantity",     default: 1, null: false
+    t.datetime "created_at",               null: false
+    t.datetime "updated_at",               null: false
   end
 
   create_table "messages", force: :cascade do |t|
@@ -30,15 +30,31 @@ ActiveRecord::Schema.define(version: 20160809064053) do
   end
 
   create_table "templates", force: :cascade do |t|
-    t.integer  "rarity"
-    t.string   "name"
+    t.integer  "rarity",             default: 0, null: false
+    t.string   "name",                           null: false
     t.text     "description"
     t.string   "image_file_name"
     t.string   "image_content_type"
     t.integer  "image_file_size"
     t.datetime "image_updated_at"
-    t.datetime "created_at",         null: false
-    t.datetime "updated_at",         null: false
+    t.datetime "created_at",                     null: false
+    t.datetime "updated_at",                     null: false
+  end
+
+  create_table "templates_traits", force: :cascade do |t|
+    t.integer  "template_id", null: false
+    t.integer  "trait_id",    null: false
+    t.datetime "created_at",  null: false
+    t.datetime "updated_at",  null: false
+  end
+
+  create_table "traits", force: :cascade do |t|
+    t.string   "kind",        null: false
+    t.string   "name",        null: false
+    t.string   "value",       null: false
+    t.text     "description"
+    t.datetime "created_at",  null: false
+    t.datetime "updated_at",  null: false
   end
 
 end
