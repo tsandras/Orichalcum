@@ -8,6 +8,10 @@ App.template = App.cable.subscriptions.create "TemplateChannel",
   received: (data) ->
     # Called when there's incoming data on the websocket for this channel
     $('#template_feedback').append 'Template ' + data.template.template.id + ' save !'
+    $('#template_id').html ''
+    for option in data.options.split ';'
+      $('#template_id').append option
+    $('#image_zone').show()
 
   speak: (template) ->
     @perform 'speak', template: template
@@ -16,15 +20,17 @@ readURL = (input) ->
   if input.files and input.files[0]
     reader = new FileReader
     reader.onload = (e) ->
+      $('#image_preview').html ''
       $('#image_preview').append '<img src="' + e.target.result + '"/>'
       $('#template_image_data').val e.target.result
       $('#template_image_file_name').val $('#template_image').val().split('\\')[2]
+      $('#image_zone').hide()
       return
     reader.readAsDataURL input.files[0]
   return
 
 jQuery ->
-  $('#template-submit').on "click", ->
+  $('#template_submit').on "click", ->
     inputs = $('input[name*=\'template\']')
     $('#template-form').ajaxForm
       success: (data) ->
@@ -32,7 +38,7 @@ jQuery ->
           inputs.eq(index).val ''
           return
         $('#image_preview').html ''
-        # $('#template_feedback').html ''
+        $('#template_feedback').html ''
         App.template.speak data['template']
         return
       error: (xhr, status, str) ->

@@ -10,7 +10,8 @@ class ItemsCreatorController < ApplicationController
     render json: { template: @template }, statue: 200
   end
 
-  def save_components
+  def random_templates_tree
+    render json: Template.random_tree
   end
 
   def templates

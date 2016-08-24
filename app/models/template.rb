@@ -37,7 +37,7 @@ class Template < ApplicationRecord
                     path: ':rails_root/public/templates/:style/:basename.:extension',
                     default_url: '/templates/:style/missing.png'
 
-  # Validations
+  # Check the integrity of instance
   validates_attachment_content_type :image, content_type: %r{\Aimage/.*\Z}
   validates_presence_of :name, :rarity
 
@@ -58,6 +58,14 @@ class Template < ApplicationRecord
 
   def attributes
     super.merge(image_url: image_url, image_thumb_url: image_thumb_url)
+  end
+
+  def self.random_tree
+    tree(random)
+  end
+
+  def self.random
+    Template.offset(rand(Template.count)).first
   end
 
   def self.tree(template, deep = 2)

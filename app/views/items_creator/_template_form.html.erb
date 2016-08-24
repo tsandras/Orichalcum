@@ -1,17 +1,18 @@
-<%= content_tag :div, id: 'template_feedback' do -%>
-<% end -%>
-<br>
+<%= content_tag :div, nil, id: 'template_feedback', class: 'bg-success' %>
+<%= content_tag :h3, 'Template' %>
 <%= form_for @template, url: items_creator_save_template_path, html: { multipart: true, id: 'template-form' } do |form| %>
   <%= label_tag 'template_name', 'Name' %>
   <%= form.text_field :name %><br>
   <%= label_tag 'template_rarity', 'Rarity' %>
-  <%= form.text_field :rarity %><br>
-  <%= form.file_field :image %><br>
-  <%= content_tag :div, id: 'image_preview' do -%>
+  <%= form.text_field :rarity, type: :number %><br>
+  <%= label_tag 'template_image', id: 'image_label' do -%>
+    <%= image_tag 'file_zone.png', id: 'image_zone' %>
+    <%= content_tag :span, nil, id: 'image_preview' %>
   <% end -%>
+  <%= form.file_field :image %><br>
   <%= form.text_field :image_data, type: :hidden %>
   <%= form.text_field :image_file_name, type: :hidden %>
   <%= label_tag 'template_description', 'Description' %>
   <%= form.text_field :description %><br>
-  <%= button_tag 'Créer', id: 'template-submit' %>
+  <%= button_tag 'Create', id: 'template_submit', class: 'btn btn-warning btn-xs' %>
 <% end %>
