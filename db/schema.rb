@@ -21,6 +21,7 @@ ActiveRecord::Schema.define(version: 20160822074916) do
     t.integer  "quantity",     default: 1, null: false
     t.datetime "created_at",               null: false
     t.datetime "updated_at",               null: false
+    t.index ["template_id", "component_id"], name: "index_components_on_template_id_and_component_id", unique: true, using: :btree
   end
 
   create_table "messages", force: :cascade do |t|

@@ -14,6 +14,10 @@ class ItemsCreatorController < ApplicationController
     render json: Template.random_tree
   end
 
+  def random_template
+    render json: Template.random
+  end
+
   def templates
     @template = Template.find_by_id params[:id]
   end
@@ -21,6 +25,11 @@ class ItemsCreatorController < ApplicationController
   def templates_tree
     template = Template.find_by_id params[:id]
     render json: Template.tree(template)
+  end
+
+  def save_tree
+    Template.save_components(params[:components])
+    render json: 'ok', statue: 200
   end
 
   private

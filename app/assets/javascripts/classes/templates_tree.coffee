@@ -1,41 +1,8 @@
-Template = (game, templateData, x, y) ->
-  @x = x
-  @y = y
-  @game = game
-  if templateData
-    @id = templateData.id
-    @name = templateData.name
-    @data = templateData
-    @text = game.add.text(@x + 55, @y + 10, '',
-      font: '12px'
-      fill: '#000'
-      align: 'left'
-      boundsAlignH: 'left'
-      boundsAlignV: 'top'
-      wordWrap: true
-      wordWrapWidth: 300)
-    @text.setTextBounds 0, 0, 80, 30
-    @text.visible = false
-    @text.text = @name + ': ' + templateData.description
-
-  @getCenter = ->
-    {
-      x: @x + 25
-      y: @y + 25
-    }
-
-  @load = ->
-    @game.load.image @name, @data.image_thumb_url
-    return
-
-  return
-
 TemplatesTree = (game, tree, xroot, yroot) ->
   self = this
   self.game = game
   self.xroot = xroot
   self.yroot = yroot
-  self.allSprites = {}
   self.allGraphics = []
   self.disconnected = {}
 
@@ -58,10 +25,9 @@ TemplatesTree = (game, tree, xroot, yroot) ->
     return
 
   subRemoveTree = (tree) ->
-    if self.allSprites[tree.template.name]
-      sprite = self.allSprites[tree.template.name]
-      sprite.kill()
-      self.allSprites[tree.template.name] = null
+    if tree.template.sprite
+      tree.template.sprite.kill()
+      tree.template.sprite = null
     tree.template.text.destroy()
     tree.components.forEach (component) ->
       subRemoveTree component, name
@@ -146,7 +112,7 @@ TemplatesTree = (game, tree, xroot, yroot) ->
       tree.template = new Template(self.game, null, node.x, node.y)
       tree.template.name = node.x + ';' + node.y
       defaultt = game.add.sprite(node.x, node.y, 'default')
-      self.allSprites[node.x + ';' + node.y] = defaultt
+      tree.template.sprite = defaultt
       node.text.x = x + 55
       node.text.y = y + 10
       self.disconnected[node.name] = node
@@ -162,12 +128,14 @@ TemplatesTree = (game, tree, xroot, yroot) ->
   subChangeNode = (tree, node, x, y) ->
     if x < tree.template.x + 50 and x > tree.template.x - 50 and y < tree.template.y + 50 and y > tree.template.y - 50 and node.name != tree.template.name
       self.disconnected[tree.template.name] = tree.template
-      self.allSprites[tree.template.name].kill()
+      tree.template.sprite.kill()
       tmpX = tree.template.x
       tmpY = tree.template.y
       tree.template = node
       tree.template.x = tmpX
       tree.template.y = tmpY
+      tree.template.sprite.x = tmpX
+      tree.template.sprite.y = tmpY
       tree.template.text.x = tmpX + 55
       tree.template.text.y = tmpY + 10
     tree.components.forEach (component) ->
@@ -200,44 +168,36 @@ TemplatesTree = (game, tree, xroot, yroot) ->
       return
     return
 
-  return
+  self.hashOfComponents = () ->
+    window.out = {}
+    subShortTree self.tree.template, self.tree
+    window.out
 
-TemplatesTreeConnector = (game, templatesTree) ->
-  self = this
-  self.templatesTree = templatesTree
-  self.game = game
-  requestForTemplatesTree = (route, templateId) ->
-    data = null
-    if templateId
-      data = id: templateId
-    $.ajax
-      type: 'POST'
-      url: '/items_creator/' + route
-      data: data
-      success: (response, textStatus) ->
-        self.templatesTree.removeTree()
-        self.templatesTree.setTree response
-        self.templatesTree.load()
-        self.templatesTree.drawConnection()
-        self.game.load.start()
-        return
-    return
-
-  self.listenerSelect = ->
-    $('#template_id').change ->
-      template = $('#template_id option:selected')
-      requestForTemplatesTree 'templates_tree', template.val()
+  subShortTree = (older, tree) ->
+    if older == tree.template
+      window.out[older.id] = []
+    else
+      if window.out[older.id]
+        window.out[older.id].push(tree.template.id)
+      else
+        window.out[older.id] = [tree.template.id]
+    tree.components.forEach (component) ->
+      subShortTree tree.template, component
       return
     return
 
-  self.listenerRandom = ->
-    $('#random_template').on 'click', ->
-      requestForTemplatesTree 'random_templates_tree', null
+  self.setSprite = (template, sprite) ->
+    subSetPrite(self.tree, template, sprite)
+    return
+
+  subSetPrite = (tree, template, sprite) ->
+    if tree.template.id == template.id
+      tree.template.sprite = sprite
+    tree.components.forEach (component) ->
+      subSetPrite component, template, sprite
       return
     return
 
   return
 
-window.Template = Template
 window.TemplatesTree = TemplatesTree
-window.TemplatesTreeConnector = TemplatesTreeConnector

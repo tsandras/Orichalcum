@@ -18,4 +18,5 @@ class Component < ApplicationRecord
 
   # Validations
   validates_presence_of :template_id, :component_id
+  validates_uniqueness_of :template_id, scope: [:component_id]
 end

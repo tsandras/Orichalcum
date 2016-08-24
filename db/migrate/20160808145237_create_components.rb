@@ -7,5 +7,6 @@ class CreateComponents < ActiveRecord::Migration[5.0]
       t.integer :quantity, null: false, default: 1
       t.timestamps
     end
+    add_index :components, [:template_id, :component_id], unique: true
   end
 end

@@ -1,65 +1,31 @@
 <%= content_tag :h3, 'Item creator' %>
 <%= content_tag :div, class: 'row' do -%>
-  <%= content_tag :div, class: 'col-md-8' do -%>
+  <%= content_tag :div, class: 'col-lg-8' do -%>
     <%= content_tag :div, class: 'form-inline' do -%>
-      <%= select_tag 'template[id]', options_for_select(@templates.map{|t| [t.name, t.id]}) %>
-      <%= button_tag 'Random', id: 'random_template', class: 'btn btn-success btn-xs' %>
+      <%= select_tag 'template[id]', options_for_select(@templates.map{|t| [t.name, t.id]}), class: 'form-control' %>
+      <%= button_tag 'Random', id: 'random_templates_tree', class: 'btn btn-success btn-xm' %>
+      <%= button_tag 'Save tree', id: 'save_tree', class: 'btn btn-warning btn-xm' %>
+      <%= button_tag 'Random template', id: 'random_template', class: 'btn btn-success btn-xm' %>
     <% end -%>
     <%= content_tag :div, nil, id: 'phaser-example' %>
   <% end -%>
-  <%= content_tag :div, class: 'col-md-4' do -%>
+  <%= content_tag :div, class: 'col-lg-4' do -%>
     <%= render 'template_form' %>
   <% end -%>
 <% end -%>
+
 <script type="text/javascript">
   $(document).ready(function() {
-    var game = new Phaser.Game(800, 600, Phaser.AUTO, 'phaser-example', { preload: preload, create: create });
-    var templatesTree = new window.TemplatesTree(game, null, 250, 50);
-    var treeConnector = new window.TemplatesTreeConnector(game, templatesTree);
-
+    window.PHASER_ASSETS.game = new Phaser.Game(800, 550, Phaser.AUTO, 'phaser-example', { 
+      preload: window.PHASER_ASSETS.preload,
+      create: window.PHASER_ASSETS.create 
+    });
+    var templatesTree = new window.TemplatesTree(window.PHASER_ASSETS.game, null, 250, 50);
+    var treeConnector = new window.TreeConnector(window.PHASER_ASSETS.game, templatesTree);
+    window.PHASER_ASSETS.treeConnector = treeConnector
     treeConnector.listenerSelect();
     treeConnector.listenerRandom();
-
-    function preload() {
-      game.load.image('default', '/templates/empty_location.png');
-    }
-
-    function create() {
-      game.stage.backgroundColor = "#FFFFFF";
-      game.load.onFileComplete.add(fileComplete, this);
-    }
-
-    function fileComplete(progress, cacheKey, success, totalLoaded, totalFiles) {
-      treeConnector.templatesTree.show();
-      var template = treeConnector.templatesTree.getTemplate(cacheKey);
-      var newSprite = game.add.sprite(template.x, template.y, cacheKey);
-      newSprite.inputEnabled = true;
-      newSprite.input.enableDrag();
-      newSprite.events.onInputOver.add(over, {template: template}, this);
-      newSprite.events.onInputOut.add(listener, {template: template}, this);
-      newSprite.events.onDragStop.add(onDragStop, {template: template}, this);
-      treeConnector.templatesTree.allSprites[cacheKey] = newSprite;
-    }
-
-    function over(item) {
-      item.input.useHandCursor = true;
-      this.template.text.visible = true;
-    }
-
-    function listener(item) {
-      this.template.text.visible = false;
-    }
-
-    function onDragStop(sprite, pointer) {
-      var t = treeConnector.templatesTree.getTemplate(sprite.key);
-      if (!t) {
-        t = treeConnector.templatesTree.disconnected[sprite.key];
-      }
-      if (treeConnector.templatesTree.isNearTo(pointer.x, pointer.y)) {
-        treeConnector.templatesTree.changeNode(t, pointer.x, pointer.y);
-      } else {
-        treeConnector.templatesTree.removeNode(t, pointer.x, pointer.y);
-      }
-    }
+    treeConnector.listenerRandomTemplate();
+    treeConnector.listenerSaveTree();
   });
 </script>

@@ -77,6 +77,16 @@ class Template < ApplicationRecord
     noeud
   end
 
+  def self.save_components(relations)
+    relations.each do |template_id, component_ids|
+      template = Template.find_by_id(template_id)
+      template.components.destroy_all if template.present?
+      component_ids.each do |component_id|
+        Component.create(template_id: template_id, component_id: component_id)
+      end
+    end
+  end
+
   protected
 
   def decode_base64_image
