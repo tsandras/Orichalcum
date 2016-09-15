@@ -28,7 +28,12 @@ TemplatesTree = (game, tree, xroot, yroot) ->
     if tree.template.sprite
       tree.template.sprite.kill()
       tree.template.sprite = null
-    tree.template.text.destroy()
+    if tree.template.text
+      tree.template.text.destroy()
+    if tree.template.shape
+      tree.template.shape.destroy()
+    if tree.template.plus
+      tree.template.plus.destroy()
     tree.components.forEach (component) ->
       subRemoveTree component, name
       return
@@ -36,7 +41,7 @@ TemplatesTree = (game, tree, xroot, yroot) ->
 
   constructTree = (tree, x, y) ->
     noeud = 
-      template: new Template(self.game, tree.template, x, y)
+      template: new Template(self.game, self, tree.template, x, y)
       components: []
     nbsComponents = tree.components.length
     xtemp = getPositionOfFirst(nbsComponents, x)
@@ -109,12 +114,14 @@ TemplatesTree = (game, tree, xroot, yroot) ->
 
   subRemoveNode = (tree, node, x, y) ->
     if tree.template == node
-      tree.template = new Template(self.game, null, node.x, node.y)
+      tree.template = new Template(self.game, tree, null, node.x, node.y)
       tree.template.name = node.x + ';' + node.y
       defaultt = game.add.sprite(node.x, node.y, 'default')
       tree.template.sprite = defaultt
       node.text.x = x + 55
       node.text.y = y + 10
+      node.shape.position.x = x
+      node.shape.position.y = y
       self.disconnected[node.name] = node
     tree.components.forEach (component) ->
       subRemoveNode component, node, x, y
@@ -134,12 +141,30 @@ TemplatesTree = (game, tree, xroot, yroot) ->
       tree.template = node
       tree.template.x = tmpX
       tree.template.y = tmpY
-      tree.template.sprite.x = tmpX
-      tree.template.sprite.y = tmpY
+      if tree.template.sprite
+        tree.template.sprite.x = tmpX
+        tree.template.sprite.y = tmpY
+      node.shape.position.x = tmpX
+      node.shape.position.y = tmpY
       tree.template.text.x = tmpX + 55
       tree.template.text.y = tmpY + 10
+      tree.template.plus.x = tmpX + 25
+      tree.template.plus.y = tmpY + 50
     tree.components.forEach (component) ->
       subChangeNode component, node, x, y
+      return
+    return
+
+  self.isInTree = (node) ->
+    window.out = false
+    subIsInTree @tree
+    window.out
+
+  subIsInTree = (tree, node) ->
+    if tree.template.id == node.id
+      window.out = true
+    tree.components.forEach (component) ->
+      subIsInTree(component, node)
       return
     return
 
@@ -187,7 +212,7 @@ TemplatesTree = (game, tree, xroot, yroot) ->
     return
 
   self.setSprite = (template, sprite) ->
-    subSetPrite(self.tree, template, sprite)
+    subSetPrite self.tree, template, sprite
     return
 
   subSetPrite = (tree, template, sprite) ->
@@ -196,6 +221,28 @@ TemplatesTree = (game, tree, xroot, yroot) ->
     tree.components.forEach (component) ->
       subSetPrite component, template, sprite
       return
+    return
+
+  subAddEmptyTemplate = (tree, template) ->
+    if tree.template.id == template.id
+      nbsCompos = tree.components.length + 1
+      tmpX = 200 * nbsCompos
+      tmpY = tree.template.y + 100
+      emptyTemplate = new Template(self.game, tree, null, tmpX, tmpY)
+      emptyTemplate.name = tmpX + ';' + tmpY
+      connectTwoTemplates tree.template, emptyTemplate
+      defaultt = game.add.sprite(tmpX, tmpY, 'default')
+      emptyTemplate.sprite = defaultt
+      emptyTemplate.key = emptyTemplate.name
+      tree.components.push({template: emptyTemplate, components: []})
+      return
+    tree.components.forEach (component) ->
+      subAddEmptyTemplate component, template
+      return
+    return
+
+  self.addEmptyTemplate = (template) ->
+    subAddEmptyTemplate self.tree, template
     return
 
   return

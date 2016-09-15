@@ -25,7 +25,7 @@ TreeConnector = (game, templatesTree) ->
       url: '/items_creator/' + route
       success: (response, textStatus) ->
         console.log response
-        template = new Template(self.templatesTree.game, response, 500, 100)
+        template = new Template(self.templatesTree.game, self.templatesTree, response, 500, 100)
         self.templatesTree.disconnected[template.name] = template
         template.load()
         self.game.load.start()

@@ -10,7 +10,6 @@ class TemplateChannel < ApplicationCable::Channel
 
   def speak(data)
     options = Template.all.map { |t| "<option value=#{t.id}>#{t.name}</option>" }
-    puts options.inspect
     options = options.join(';')
     ActionCable.server.broadcast 'template_channel', template: data, options: options
   end
