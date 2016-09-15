@@ -91,12 +91,17 @@ class Template < ApplicationRecord
 
   def decode_base64_image
     if image_data.present?
-      blob = image_data.split(',')[1]
-      data = StringIO.new(Base64.decode64(blob))
+      if image_data.class.to_s == 'File'
+        data = image_data
+      else
+        blob = image_data.split(',')[1]
+        data = StringIO.new(Base64.decode64(blob))
+      end
       data.class_eval do
         attr_accessor :content_type, :original_filename
       end
       data.original_filename = image_file_name
+      data.content_type = image_content_type if image_content_type.present?
       self.image = data
     end
   end
